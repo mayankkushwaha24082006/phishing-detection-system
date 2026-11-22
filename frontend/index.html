@@ -9,10 +9,11 @@
   <div id="nav"></div>
   <main class="wrap">
     <section class="hero">
-      <h1>Detect <span class="grad">phishing websites</span> with Machine Learning</h1>
-      <p class="muted">Paste a URL. Our Random Forest model and rule checks analyse the URL text. The site is never opened.</p>
+      <span class="pill"><i></i> Links are analysed as text. Nothing is ever opened.</span>
+      <h1>Check a link <span class="grad">before you click it</span></h1>
+      <p class="muted lead">Paste any URL. Our trained Random Forest model and security rule checks tell you how risky it looks, and why, in plain language.</p>
       <div class="scan">
-        <input type="text" id="url" placeholder="https://example.com/login" autocomplete="off" spellcheck="false">
+        <input type="text" id="url" placeholder="Paste a link, e.g. https://example.com/login" autocomplete="off" spellcheck="false">
         <button id="scanBtn">Scan Now</button>
       </div>
       <div class="chips">
@@ -25,17 +26,32 @@
       </div>
       <div class="err" id="error"></div>
     </section>
+
     <div class="result" id="result"></div>
+
+    <div class="stats">
+      <div><b>235K</b><span>URLs used for training</span></div>
+      <div><b>3</b><span>algorithms compared</span></div>
+      <div><b>16</b><span>automated tests</span></div>
+      <div><b>0</b><span>links ever opened</span></div>
+    </div>
+
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="card step"><h3>Paste a link</h3><p class="muted">Type or paste any web address. We check that it is a valid link first.</p></div>
+      <div class="card step"><h3>We analyse the text</h3><p class="muted">The model studies the domain name and the rules look for tricks like @ symbols, IP addresses and hidden redirects.</p></div>
+      <div class="card step"><h3>You get clear advice</h3><p class="muted">A risk level, a score out of 100, the reasons, and what you should do next.</p></div>
+    </div>
 
     <h2>What is phishing?</h2>
     <p class="muted">Phishing is a cyber attack where criminals imitate trusted websites (banks, email, payment apps) to steal passwords and card details. Fake links are the most common way victims reach these sites.</p>
 
-    <h2>Features</h2>
+    <h2>Why PhishGuard AI</h2>
     <div class="grid">
-      <div class="card"><h3>🧠 Real ML model</h3><p class="muted">Random Forest trained on about 235,000 labelled URLs, compared with Decision Tree and Logistic Regression.</p></div>
-      <div class="card"><h3>🔍 Explainable</h3><p class="muted">Every warning sign is listed in plain language, so you see why a URL was flagged.</p></div>
-      <div class="card"><h3>🔒 Safe by design</h3><p class="muted">URLs are analysed as text only. Nothing is visited, downloaded or executed.</p></div>
-      <div class="card"><h3>📊 Dashboard</h3><p class="muted">Charts and history are built from your real scans, with no fake numbers.</p></div>
+      <div class="card"><span class="icon">🧠</span><h3>Real ML model</h3><p class="muted">Random Forest trained on about 235,000 labelled URLs and compared with Decision Tree and Logistic Regression.</p></div>
+      <div class="card"><span class="icon">🔍</span><h3>Explainable</h3><p class="muted">Every warning sign is listed in plain language, so you see why a link was flagged.</p></div>
+      <div class="card"><span class="icon">🔒</span><h3>Safe by design</h3><p class="muted">URLs are analysed as text only. Nothing is visited, downloaded or executed.</p></div>
+      <div class="card"><span class="icon">📊</span><h3>Dashboard</h3><p class="muted">Charts and history are built from your own real scans, with no fake numbers.</p></div>
     </div>
   </main>
   <div id="footer"></div>
