@@ -29,37 +29,85 @@
    
    // ---------- result card (used by Home and History) ----------
    function renderResult(r, target) {
-     const colour = { success: "var(--success)", warning: "var(--warning)", danger: "var(--danger)" }[r.level];
-     const f = r.features;
-     const indicators = r.indicators.length
-       ? r.indicators.map((i) => `<div class="ind ${esc(i.severity)}"><b>+${i.points}</b> ${esc(i.text)}</div>`).join("")
-       : `<p class="muted">No rule-based warning signs found.</p>`;
-     target.innerHTML = `
-     <div class="card lvl-${esc(r.level)}">
-       <div class="top">
-         <div class="gauge" style="background:conic-gradient(${colour} ${r.risk_score * 3.6}deg,#1f2d4a 0)">
-           <div><span>${r.risk_score}<small>RISK / 100</small></span></div></div>
-         <div style="flex:1;min-width:220px">
-           <span class="badge">${esc(r.label)}</span>
-           <div class="urlbox">${esc(r.url)}</div>
-           <div>${esc(r.status)}</div>
-         </div>
-       </div>
-       <h3>Why this result?</h3>
-       <p>${esc(r.explanation)}</p>
-       ${indicators}
-       <h3>Model output vs. risk score</h3>
-       <p class="muted">Model probability (uncalibrated, domain name only): <b>${(r.model_probability * 100).toFixed(1)}%</b>
-       · Rule points: <b>${r.rule_points}</b> · Final risk score: <b>${r.risk_score}</b> (${esc(r.model_name)})</p>
-       <h3>URL characteristics</h3>
-       <div class="tablewrap"><table>
-         <tr><th>Length</th><th>Dots</th><th>Hyphens</th><th>Subdomains</th><th>Special chars</th><th>Entropy</th><th>HTTPS</th></tr>
-         <tr><td>${f.url_length}</td><td>${f.num_dots}</td><td>${f.num_hyphens}</td><td>${f.num_subdomains}</td>
-         <td>${f.num_special_chars}</td><td>${f.url_entropy}</td><td>${f.uses_https ? "Yes" : "No"}</td></tr>
-       </table></div>
-       <p class="note">${esc(r.disclaimer)}</p>
-     </div>`;
-   }
+    // Plain-language text for each risk level
+    const text = {
+      success: {
+        icon: "✅", title: "No major warning signs found",
+        say: "This link looks fairly normal. That does not prove it is safe, because no tool can promise that.",
+        todo: ["Check that the website name is exactly what you expected.",
+               "Do not enter passwords or card details if anything feels wrong.",
+               "If unsure, type the official address yourself instead of clicking links."],
+      },
+      warning: {
+        icon: "⚠️", title: "Be careful with this link",
+        say: "Some things about this link look unusual. It may be harmless, but it is worth checking first.",
+        todo: ["Do not enter passwords, OTPs or card details yet.",
+               "Check the website name carefully for spelling tricks.",
+               "Open the official website by typing its address yourself, then compare."],
+      },
+      danger: {
+        icon: "⛔", title: "Do not trust this link",
+        say: "This link has several signs that are common in phishing (fake) websites.",
+        todo: ["Do not open this link or enter any information.",
+               "If it came in a message or email, do not reply to it. Delete it or report it as spam.",
+               "If you already entered a password, change it now and contact your bank or service."],
+      },
+    }[r.level];
+  
+    const sev = { high: "High concern", medium: "Medium concern", low: "Minor" };
+  
+    // "What we found" list
+    let findings;
+    if (r.indicators.length) {
+      findings = r.indicators.map((i) =>
+        `<div class="ind ${esc(i.severity)}"><span class="sev">${sev[i.severity] || "Note"}</span>${esc(i.text)}</div>`).join("");
+    } else if (r.level === "success") {
+      findings = `<p class="muted">We did not find common phishing tricks such as an @ symbol, an IP address instead of a name, a hidden redirect, or a link shortener.</p>`;
+    } else {
+      findings = `<div class="ind medium"><span class="sev">Medium concern</span>The website name looks unusual compared with the sites our system learned from. This is based only on the name, so it may be a false alarm.</div>`;
+    }
+  
+    const f = r.features;
+    target.innerHTML = `
+    <div class="card lvl-${esc(r.level)}">
+      <div class="verdict">
+        <div class="vicon">${text.icon}</div>
+        <div>
+          <h3 class="vtitle">${text.title}</h3>
+          <p>${text.say}</p>
+        </div>
+      </div>
+  
+      <div class="urlbox">${esc(r.url)}</div>
+  
+      <div class="meter-wrap">
+        <div class="meter">
+          <span class="zone z1"></span><span class="zone z2"></span><span class="zone z3"></span>
+          <span class="marker" style="left:${Math.min(98, Math.max(2, r.risk_score))}%"></span>
+        </div>
+        <div class="meter-labels"><span>Low risk</span><span>Suspicious</span><span>Phishing</span></div>
+        <p class="muted">Risk score: <b>${r.risk_score} out of 100</b>. The higher the number, the riskier the link.</p>
+      </div>
+  
+      <h3>What should I do?</h3>
+      <ul class="todo">${text.todo.map((t) => `<li>${t}</li>`).join("")}</ul>
+  
+      <h3>What we found</h3>
+      ${findings}
+  
+      <details>
+        <summary>Technical details (for students and examiners)</summary>
+        <p class="muted">Model probability (uncalibrated, domain name only): <b>${(r.model_probability * 100).toFixed(1)}%</b>
+        · Rule points: <b>${r.rule_points}</b> · Final risk score: <b>${r.risk_score}</b> (${esc(r.model_name)})</p>
+        <div class="tablewrap"><table>
+          <tr><th>Length</th><th>Dots</th><th>Hyphens</th><th>Subdomains</th><th>Special chars</th><th>Entropy</th><th>HTTPS</th></tr>
+          <tr><td>${f.url_length}</td><td>${f.num_dots}</td><td>${f.num_hyphens}</td><td>${f.num_subdomains}</td>
+          <td>${f.num_special_chars}</td><td>${f.url_entropy}</td><td>${f.uses_https ? "Yes" : "No"}</td></tr>
+        </table></div>
+        <p class="note">${esc(r.disclaimer)}</p>
+      </details>
+    </div>`;
+  }
    
    const badge = (label) => {
      const lvl = { "Low Risk": "success", Suspicious: "warning", Phishing: "danger" }[label] || "success";

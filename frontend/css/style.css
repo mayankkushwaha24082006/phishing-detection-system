@@ -56,3 +56,22 @@
     .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:14px}
     button.chip{background:transparent;border:1px solid var(--line);color:var(--muted);padding:5px 12px;font-size:.8rem;font-weight:500}
     button.chip:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* ---- clearer result card ---- */
+.verdict{display:flex;gap:16px;align-items:center;padding:6px 0 4px}
+.vicon{font-size:2.6rem;line-height:1}
+.vtitle{margin:0 0 4px;font-size:1.5rem;color:var(--c)}
+.verdict p{margin:0}
+.result h3{margin:22px 0 8px}
+.meter-wrap{margin:18px 0 4px}
+.meter{position:relative;display:flex;height:14px;border-radius:99px;overflow:hidden}
+.zone{display:block;height:100%}
+.z1{width:30%;background:var(--success)}.z2{width:40%;background:var(--warning)}.z3{width:30%;background:var(--danger)}
+.marker{position:absolute;top:-5px;width:6px;height:24px;margin-left:-3px;border-radius:3px;background:#fff;box-shadow:0 0 0 2px #0B1120}
+.meter-labels{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:6px}
+.todo{margin:0;padding-left:20px;line-height:1.7}
+.sev{display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+  padding:2px 8px;border-radius:99px;margin-right:8px;background:#1f2d4a;color:var(--text)}
+.ind.high .sev{background:var(--danger)}.ind.medium .sev{background:var(--warning);color:#111}.ind.low .sev{background:var(--primary)}
+details{margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;color:var(--accent);font-weight:600}
