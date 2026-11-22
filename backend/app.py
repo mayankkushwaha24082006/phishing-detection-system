@@ -6,17 +6,22 @@ Flask REST API for the Phishing Detection System.
 Endpoints:
   GET    /api/health         -> is the server / model ready?
   POST   /api/scan           -> analyze a URL and save the result
-  GET    /api/dashboard      -> statistics computed from saved scans
-  GET    /api/history        -> list previous scans
-  GET    /api/history/<id>   -> full details of one previous scan
-  DELETE /api/history        -> clear all history
+  GET    /api/dashboard      -> statistics computed from THIS visitor's scans
+  GET    /api/history        -> list THIS visitor's previous scans
+  GET    /api/history/<id>   -> full details of one of THIS visitor's scans
+  DELETE /api/history        -> clear THIS visitor's history
+
+Visitors are separated by a random ID stored in an HttpOnly cookie.
+This keeps histories apart but is NOT authentication.
 
 SAFETY: submitted URLs are only analysed as text, never visited.
 """
 
 import json
 import os
+import re
 import sqlite3
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -29,9 +34,11 @@ from feature_extraction import normalize_url
 ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = ROOT / "frontend"
 DB_PATH = Path(os.environ.get("DB_PATH", Path(__file__).resolve().parent / "scans.db"))
+
 # The frontend folder is served by Flask too, so the whole app runs from one URL.
 app = Flask(__name__, static_folder=str(FRONTEND_DIR), static_url_path="")
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024      # reject huge requests
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024          # reject huge requests
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0           # always serve the latest HTML/JS/CSS
 # CORS only matters if you open the HTML with VS Code "Live Server" (another port)
 CORS(app, resources={r"/api/*": {"origins": [r"http://127.0.0.1:\d+", r"http://localhost:\d+"]}})
 
@@ -44,13 +51,19 @@ def init_db():
     conn.execute("""
         CREATE TABLE IF NOT EXISTS scans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            owner TEXT NOT NULL DEFAULT '',   -- random visitor ID from the cookie
             url TEXT NOT NULL,
             label TEXT NOT NULL,
             risk_score INTEGER NOT NULL,
             model_probability REAL NOT NULL,
-            created_at TEXT NOT NULL,      -- UTC, ISO format
-            details TEXT NOT NULL          -- full result as JSON
+            created_at TEXT NOT NULL,         -- UTC, ISO format
+            details TEXT NOT NULL             -- full result as JSON
         )""")
+    # Upgrade an older database that has no owner column
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(scans)")]
+    if "owner" not in cols:
+        conn.execute("ALTER TABLE scans ADD COLUMN owner TEXT NOT NULL DEFAULT ''")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_scans_owner ON scans(owner)")
     conn.commit()
     conn.close()
 
@@ -68,6 +81,32 @@ def close_db(_error):
     db = g.pop("db", None)
     if db is not None:
         db.close()
+
+
+# ----------------------------------------------------------------------------
+# Visitor identification (random ID in an HttpOnly cookie)
+# ----------------------------------------------------------------------------
+OWNER_COOKIE = "phishguard_id"
+_UUID_RE = re.compile(r"^[0-9a-f]{32}$")
+
+
+@app.before_request
+def identify_visitor():
+    """Read the visitor's random ID from the cookie, or create a new one."""
+    cookie = request.cookies.get(OWNER_COOKIE, "")
+    if _UUID_RE.match(cookie):
+        g.owner, g.new_owner = cookie, False
+    else:
+        g.owner, g.new_owner = uuid.uuid4().hex, True
+
+
+@app.after_request
+def set_visitor_cookie(resp):
+    if getattr(g, "new_owner", False):
+        resp.set_cookie(OWNER_COOKIE, g.owner, max_age=60 * 60 * 24 * 365,
+                        httponly=True, samesite="Lax",
+                        secure=request.is_secure)   # HTTPS-only on Render, still works on http://127.0.0.1
+    return resp
 
 
 def row_to_summary(row):
@@ -122,12 +161,12 @@ def scan():
     result["scheme_assumed"] = scheme_assumed
     result["created_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-    # 3. Save to history
+    # 3. Save to THIS visitor's history
     db = get_db()
     cur = db.execute(
-        "INSERT INTO scans (url, label, risk_score, model_probability, created_at, details) "
-        "VALUES (?, ?, ?, ?, ?, ?)",
-        (clean_url, result["label"], result["risk_score"],
+        "INSERT INTO scans (owner, url, label, risk_score, model_probability, created_at, details) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (g.owner, clean_url, result["label"], result["risk_score"],
          result["model_probability"], result["created_at"], json.dumps(result)))
     db.commit()
     result["id"] = cur.lastrowid
@@ -138,11 +177,13 @@ def scan():
 def dashboard():
     db = get_db()
     counts = {"Phishing": 0, "Suspicious": 0, "Low Risk": 0}
-    for row in db.execute("SELECT label, COUNT(*) AS n FROM scans GROUP BY label"):
+    for row in db.execute(
+            "SELECT label, COUNT(*) AS n FROM scans WHERE owner = ? GROUP BY label", (g.owner,)):
         counts[row["label"]] = row["n"]
     total = sum(counts.values())
 
-    avg = db.execute("SELECT AVG(risk_score) AS a FROM scans").fetchone()["a"]
+    avg = db.execute("SELECT AVG(risk_score) AS a FROM scans WHERE owner = ?",
+                     (g.owner,)).fetchone()["a"]
 
     # Scans per day for the last 7 days (UTC days), with zeros filled in
     today = datetime.now(timezone.utc).date()
@@ -151,12 +192,14 @@ def dashboard():
     key = {"Phishing": "phishing", "Suspicious": "suspicious", "Low Risk": "low_risk"}
     rows = db.execute(
         "SELECT substr(created_at, 1, 10) AS day, label, COUNT(*) AS n FROM scans "
-        "WHERE substr(created_at, 1, 10) >= ? GROUP BY day, label", (days[0],))
+        "WHERE owner = ? AND substr(created_at, 1, 10) >= ? GROUP BY day, label",
+        (g.owner, days[0]))
     for row in rows:
         if row["day"] in per_day:
             per_day[row["day"]][key[row["label"]]] = row["n"]
 
-    recent = db.execute("SELECT * FROM scans ORDER BY id DESC LIMIT 5").fetchall()
+    recent = db.execute("SELECT * FROM scans WHERE owner = ? ORDER BY id DESC LIMIT 5",
+                        (g.owner,)).fetchall()
 
     return jsonify({
         "total_scans": total,
@@ -175,13 +218,17 @@ def history():
         limit = max(1, min(int(request.args.get("limit", 100)), 500))
     except ValueError:
         return jsonify({"error": "limit must be a number."}), 400
-    rows = get_db().execute("SELECT * FROM scans ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+    rows = get_db().execute(
+        "SELECT * FROM scans WHERE owner = ? ORDER BY id DESC LIMIT ?",
+        (g.owner, limit)).fetchall()
     return jsonify({"count": len(rows), "scans": [row_to_summary(r) for r in rows]})
 
 
 @app.get("/api/history/<int:scan_id>")
 def history_item(scan_id):
-    row = get_db().execute("SELECT details FROM scans WHERE id = ?", (scan_id,)).fetchone()
+    # A scan ID that belongs to someone else is reported as "not found"
+    row = get_db().execute("SELECT details FROM scans WHERE id = ? AND owner = ?",
+                           (scan_id, g.owner)).fetchone()
     if row is None:
         return jsonify({"error": "Scan not found."}), 404
     result = json.loads(row["details"])
@@ -192,9 +239,28 @@ def history_item(scan_id):
 @app.delete("/api/history")
 def clear_history():
     db = get_db()
-    deleted = db.execute("DELETE FROM scans").rowcount
+    deleted = db.execute("DELETE FROM scans WHERE owner = ?", (g.owner,)).rowcount
     db.commit()
     return jsonify({"deleted": deleted})
+
+
+# ----------------------------------------------------------------------------
+# Security headers and favicon
+# ----------------------------------------------------------------------------
+@app.after_request
+def add_security_headers(resp):
+    """Basic browser-side protections on every response."""
+    resp.headers["X-Content-Type-Options"] = "nosniff"   # don't guess file types
+    resp.headers["X-Frame-Options"] = "DENY"             # page can't be embedded in other sites
+    resp.headers["Referrer-Policy"] = "no-referrer"
+    if request.path.startswith("/api/"):
+        resp.headers["Cache-Control"] = "no-store"        # API answers are never cached
+    return resp
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return "", 204    # no icon file; stops the 404 in the server log
 
 
 # ----------------------------------------------------------------------------

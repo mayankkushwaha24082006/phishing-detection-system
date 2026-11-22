@@ -126,6 +126,19 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(d["deleted"], 2)
         self.assertEqual(self.client.get("/api/history").get_json()["count"], 0)
 
+    # ---------------- per-visitor separation ----------------
+    def test_each_visitor_sees_only_their_own_history(self):
+        a = app_module.app.test_client()
+        b = app_module.app.test_client()          # separate cookie jar = different visitor
+        a.post("/api/scan", json={"url": "https://github.com"})
+        self.assertEqual(a.get("/api/history").get_json()["count"], 1)
+        self.assertEqual(b.get("/api/history").get_json()["count"], 0)
+        self.assertEqual(b.get("/api/dashboard").get_json()["total_scans"], 0)
+        a_id = a.get("/api/history").get_json()["scans"][0]["id"]
+        self.assertEqual(b.get(f"/api/history/{a_id}").status_code, 404)
+        b.delete("/api/history")                  # must not touch A's scans
+        self.assertEqual(a.get("/api/history").get_json()["count"], 1)
+
     # ---------------- dashboard ----------------
     def test_dashboard_is_zero_when_empty(self):
         d = self.client.get("/api/dashboard").get_json()
