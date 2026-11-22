@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhishGuard AI - Phishing URL Detection</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="home">
+  <div id="nav"></div>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Detect <span class="grad">phishing websites</span> with Machine Learning</h1>
+      <p class="muted">Paste a URL. Our Random Forest model and rule checks analyse the URL text. The site is never opened.</p>
+      <div class="scan">
+        <input type="text" id="url" placeholder="https://example.com/login" autocomplete="off" spellcheck="false">
+        <button id="scanBtn">Scan Now</button>
+      </div>
+      <div class="chips">
+        <span class="muted">Try:</span>
+        <button class="chip" data-url="https://www.wikipedia.org">wikipedia.org</button>
+        <button class="chip" data-url="https://github.com">github.com</button>
+        <button class="chip" data-url="http://paypal.com@evil-site.xyz/secure">@ trick</button>
+        <button class="chip" data-url="http://192.168.10.5/login/verify.php">IP address</button>
+        <button class="chip" data-url="http://paypal-secure-login-verify.xyz/webscr/update">fake login</button>
+      </div>
+      <div class="err" id="error"></div>
+    </section>
+    <div class="result" id="result"></div>
+
+    <h2>What is phishing?</h2>
+    <p class="muted">Phishing is a cyber attack where criminals imitate trusted websites (banks, email, payment apps) to steal passwords and card details. Fake links are the most common way victims reach these sites.</p>
+
+    <h2>Features</h2>
+    <div class="grid">
+      <div class="card"><h3>🧠 Real ML model</h3><p class="muted">Random Forest trained on about 235,000 labelled URLs, compared with Decision Tree and Logistic Regression.</p></div>
+      <div class="card"><h3>🔍 Explainable</h3><p class="muted">Every warning sign is listed in plain language, so you see why a URL was flagged.</p></div>
+      <div class="card"><h3>🔒 Safe by design</h3><p class="muted">URLs are analysed as text only. Nothing is visited, downloaded or executed.</p></div>
+      <div class="card"><h3>📊 Dashboard</h3><p class="muted">Charts and history are built from your real scans, with no fake numbers.</p></div>
+    </div>
+  </main>
+  <div id="footer"></div>
+  <script src="js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+*.db
+ml/dataset/*.csv
+ml/saved_model/test_set.csv

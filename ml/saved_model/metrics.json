@@ -1,0 +1,73 @@
+{
+  "best_model": "Random Forest",
+  "ablation": {
+    "ALL features (with shortcuts)": {
+      "accuracy": 0.9975,
+      "precision": 0.9989,
+      "recall": 0.9952,
+      "f1": 0.9971
+    },
+    "ALL minus is_https": {
+      "accuracy": 0.9444,
+      "precision": 0.9761,
+      "recall": 0.8929,
+      "f1": 0.9326
+    },
+    "DOMAIN-ONLY (our choice)": {
+      "accuracy": 0.7999,
+      "precision": 0.8523,
+      "recall": 0.6485,
+      "f1": 0.7366
+    }
+  },
+  "comparison": {
+    "Random Forest": {
+      "accuracy": 0.7999326514290525,
+      "precision": 0.8522960492560288,
+      "recall": 0.6484969744290455,
+      "f1": 0.7365591397849462,
+      "confusion_matrix": [
+        [
+          24719,
+          2303
+        ],
+        [
+          7203,
+          13289
+        ]
+      ]
+    },
+    "Decision Tree": {
+      "accuracy": 0.7982278907269437,
+      "precision": 0.85075587005468,
+      "recall": 0.6453738044114776,
+      "f1": 0.7339678663595749,
+      "confusion_matrix": [
+        [
+          24702,
+          2320
+        ],
+        [
+          7267,
+          13225
+        ]
+      ]
+    },
+    "Logistic Regression": {
+      "accuracy": 0.7852211979627057,
+      "precision": 0.8146448889704533,
+      "recall": 0.6498633613117314,
+      "f1": 0.7229837943483808,
+      "confusion_matrix": [
+        [
+          23992,
+          3030
+        ],
+        [
+          7175,
+          13317
+        ]
+      ]
+    }
+  }
+}

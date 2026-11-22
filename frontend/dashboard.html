@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard - PhishGuard AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="dashboard">
+  <div id="nav"></div>
+  <main class="wrap">
+    <h2>Dashboard</h2>
+    <div class="err" id="error"></div>
+    <p class="muted" id="empty" style="display:none">No scans yet. Scan a few URLs on the Home page and the charts will fill in.</p>
+    <div class="grid">
+      <div class="card stat"><span class="muted">Total scanned</span><b id="total">0</b></div>
+      <div class="card stat"><span class="muted">Phishing</span><b id="phish" style="color:var(--danger)">0</b></div>
+      <div class="card stat"><span class="muted">Suspicious</span><b id="susp" style="color:var(--warning)">0</b></div>
+      <div class="card stat"><span class="muted">Low risk</span><b id="low" style="color:var(--success)">0</b></div>
+      <div class="card stat"><span class="muted">Average risk score</span><b id="avg">-</b></div>
+    </div>
+    <div class="charts">
+      <div class="card"><h3>Result distribution</h3><canvas id="pie"></canvas></div>
+      <div class="card"><h3>Scans, last 7 days</h3><canvas id="bar"></canvas></div>
+    </div>
+    <h2>Recent activity</h2>
+    <div class="card tablewrap"><table>
+      <thead><tr><th>URL</th><th>Result</th><th>Score</th><th>Time</th></tr></thead>
+      <tbody id="recent"></tbody>
+    </table></div>
+  </main>
+  <div id="footer"></div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>

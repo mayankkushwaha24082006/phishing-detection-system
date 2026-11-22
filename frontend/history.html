@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>History - PhishGuard AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="history">
+  <div id="nav"></div>
+  <main class="wrap">
+    <h2>Scan history</h2>
+    <div class="err" id="error"></div>
+    <p><span class="muted" id="count"></span> &nbsp; <button class="ghost small" id="clear">Clear history</button></p>
+    <div class="card tablewrap"><table>
+      <thead><tr><th>URL</th><th>Result</th><th>Score</th><th>Scanned</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <div class="result" id="detail"></div>
+  </main>
+  <div id="footer"></div>
+  <script src="js/script.js"></script>
+</body>
+</html>

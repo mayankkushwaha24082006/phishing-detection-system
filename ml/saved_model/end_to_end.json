@@ -1,0 +1,23 @@
+{
+  "ML model alone (prob >= 0.5)": {
+    "accuracy": 0.7767,
+    "precision": 0.8843,
+    "recall": 0.6367,
+    "f1": 0.7403,
+    "false_alarm_rate": 0.0833
+  },
+  "Full system: 'Phishing' only": {
+    "accuracy": 0.623,
+    "precision": 1.0,
+    "recall": 0.246,
+    "f1": 0.3949,
+    "false_alarm_rate": 0.0
+  },
+  "Full system: Suspicious OR Phishing": {
+    "accuracy": 0.849,
+    "precision": 0.8593,
+    "recall": 0.8347,
+    "f1": 0.8468,
+    "false_alarm_rate": 0.1367
+  }
+}
